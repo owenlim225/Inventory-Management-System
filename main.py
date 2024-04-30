@@ -14,7 +14,7 @@ class Gui(tk.Tk):
         self.resizable(False, False)
         
         # Title label
-        lbl_title = tk.Label(self, bd=15, relief=tk.RIDGE, text="I pray masarap ulam mo ash", fg="blue", bg="linen", font=("times new roman", 20, "bold"))
+        lbl_title = tk.Label(self, bd=15, relief=tk.RIDGE, text="INVENTORY MANAGEMENT SYSTEM", fg="blue", bg="linen", font=("times new roman", 20, "bold"))
         lbl_title.pack(side=tk.TOP, fill=tk.X)
         
         # Treeview widget
