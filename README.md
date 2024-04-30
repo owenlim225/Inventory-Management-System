@@ -21,3 +21,16 @@ Update the details of an existing product by searching for its ID and providing 
 Remove a product from the inventory by searching for its ID and confirming removal.
 Exit the application.
 Ensure error handling for invalid inputs and proper closing of the database connection.
+
+# Update v1.0
+
+![image](https://github.com/owenlim225/Inventory-Management-System/assets/87555304/22fcdc6e-a591-488c-8ae7-892f3f625e09)
+
+- add button works properly
+- remove button works properly (need improvement)
+- view button works properly (need improvement and more function)
+- update button works properly (need improvement)
+- exit works properly
+- file system (not working properly)
+- data are center alligned
+  
