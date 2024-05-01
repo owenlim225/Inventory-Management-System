@@ -102,7 +102,7 @@ class Gui(tk.Tk):
         btn_add.grid(row=0, column=0)
         
         #Remove a product from the inventory by searching for its ID and confirming removal.
-        btn_remove = tk.Button(button_frame, command=self.remove, text="Remove", bg="red", fg="white", font=("times new roman", 11, "bold"), width=17, height=1, padx=4, pady=6)
+        btn_remove = tk.Button(button_frame, command=self.remove_selected_item, text="Remove", bg="red", fg="white", font=("times new roman", 11, "bold"), width=17, height=1, padx=4, pady=6)
         btn_remove.grid(row=0, column=1)
         
         #View all existing products stored in the inventory, including their ID, name, price, and quantity.
@@ -184,18 +184,7 @@ class Gui(tk.Tk):
         quantity_label.pack()
         quantity_entry = tk.Entry(add_window)
         quantity_entry.pack()
-        quantity_entry.config(validate="key", validatecommand=(quantity_entry.register(lambda char: char.isdigit() or char == ','), "%S"))  # Validate input to allow only numbers and comma
-        
-        # Function to insert comma every third digit in quantity
-        def insert_commas(char):
-            if char.isdigit():
-                value = quantity_entry.get().replace(",", "") + char
-                value = "{:,}".format(int(value))  # Add commas every third digit
-                quantity_entry.delete(0, tk.END)
-                quantity_entry.insert(0, value)
-            return True
-        
-        quantity_entry.config(validatecommand=(quantity_entry.register(insert_commas), "%S"))  # Modify the validation command to call insert_commas
+        quantity_entry.config(validate="key", validatecommand=(quantity_entry.register(lambda char: char.isdigit()), "%S"))  # Validate input to allow only digits
         
         # Button to add product
         add_button = tk.Button(add_window, text="Add", command=add_product, bg="green", fg="white", width=10)
@@ -241,18 +230,21 @@ class Gui(tk.Tk):
 
         # Open a new window for viewing products
         view_window = tk.Toplevel(self)
-        view_window.geometry("250x250")  # Fixed the typo here
+        view_window.geometry("250x200")  # Fixed the typo here
         view_window.title("View Products")
         view_window.resizable(False, False)
         view_window.configure(bd=20, relief=tk.RIDGE)
         
-        search_label = tk.Label(view_window, text="Search\n(ID, Name, Price, Quantity):")  # Adjusted the label text
+        search_label = tk.Label(view_window, text="Search:", font=("Arial", 10, "bold"))  # Adjusted the label text
+        search_label.pack(pady=10)
+        
+        search_label = tk.Label(view_window, text="(ID, Name, Price, Quantity):",)  # Adjusted the label text
         search_label.pack(pady=10)
 
         search_entry = tk.Entry(view_window)
         search_entry.pack(pady=5)
 
-        search_button = tk.Button(view_window, text="Search", command=lambda: search_products(search_entry.get()))
+        search_button = tk.Button(view_window, text="Search", bg="green", fg="white", command=lambda: search_products(search_entry.get()))
         search_button.pack(pady=5)
         
     # Update button function
@@ -312,7 +304,7 @@ class Gui(tk.Tk):
         update_button = tk.Button(update_window, text="Update", command=update_product, bg="green", fg="white", width=10)
         update_button.pack()
 
-    # Remove button function
+    # For delete button on menu bar
     def remove(self):
         # Function to remove product from database
         def remove_product():
@@ -353,13 +345,42 @@ class Gui(tk.Tk):
             self.destroy()
 
 
+    # For delete button below
+    def remove_selected_item(self):
+        # Get the selected item
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No Item Selected", "Please select an item to remove.")
+            return
+        
+        # Retrieve the ID of the selected item
+        item_id = self.tree.item(selected_item, "values")[0]
+
+        # Remove data from the database
+        conn = sqlite3.connect('inventory.db')
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM products WHERE id=?", (item_id,))
+        conn.commit()
+        conn.close()
+
+        # Refresh the Treeview to reflect the changes
+        self.Tree()
+
+
+
+
+
+
+
+
+
     # Menu Bar 
     def MenuBar(self):
         menuBar = tk.Menu(self)
         #File
         file_menu = tk.Menu(menuBar, tearoff=0)
-        file_menu.add_command(label="Open", command=self.open_file)
-        file_menu.add_command(label="Save", command=self.save_file)
+        file_menu.add_command(label="Open file", command=self.open_file)
+        file_menu.add_command(label="Save file", command=self.save_file)
         menuBar.add_cascade(label="File", menu=file_menu)
 
         #Edit
@@ -377,53 +398,15 @@ class Gui(tk.Tk):
         #Show Menu in Window
         self.config(menu=menuBar)
 
-    # Open file (database files only)   Dev Note: Experimental, may or may not work
+    # Open file (under construction)
     def open_file(self):
-        # Open database file in File Manager
-        file_path = filedialog.askopenfilename(filetypes=[("Database files", "*.db")])
-        
-        # Connect to the selected database file
-        if file_path:
-            conn = sqlite3.connect(file_path)
-            cursor = conn.cursor()
+        messagebox.showwarning("Sorry!", "Under maintaince, please wait for the next update")
 
-            # Check if the 'products' table exists in the database
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='products'")
-            table_exists = cursor.fetchone()
+    # Save file (under construction)
+    def save_file(self):    
+        messagebox.showwarning("Sorry!", "Under maintaince, please wait for the next update")
 
-            if table_exists:
-                # Clear the existing Treeview
-                self.tree.delete(*self.tree.get_children())
-                
-                # Retrieve data from the 'products' table and insert it into the Treeview
-                cursor.execute("SELECT * FROM products")
-                rows = cursor.fetchall()
-                for row in rows:
-                    self.tree.insert("", "end", values=row)
-                
-                # Close the database connection
-                conn.close()
-            else:
-                messagebox.showwarning("Table Not Found", "No 'products' table found in the selected database file.")
 
-    # Save file (database files only)   Dev Note: Experimental, may or may not work
-    def save_file(self):
-        # Save database file settings to File Manager
-        file_path = filedialog.asksaveasfilename(defaultextension=".db", filetypes=[("Database files", "*.db")])
-
-        # Copy the current database file to the selected location
-        if file_path:
-            if os.path.isfile('inventory.db'):
-                conn = sqlite3.connect('inventory.db')
-                try:
-                    conn.backup(file_path)
-                    messagebox.showinfo("Save Successful", "Database file saved successfully.")
-                except sqlite3.Error as e:
-                    messagebox.showerror("Save Error", f"Error saving database file: {str(e)}")
-                finally:
-                    conn.close()
-            else:
-                messagebox.showwarning("Database Not Found", "No database file found to save.")
 
     #Help Menu
     def show_about(self):
