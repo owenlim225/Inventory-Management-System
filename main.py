@@ -6,6 +6,33 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os.path
 
+
+# Get the directory where the py script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Define the path to the SQLite database file
+db_file = os.path.join(script_dir, "inventory.db")
+
+# Centralized function to create or connect to the database
+def connect_database():
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
+    return conn, cursor
+
+# Check if the database file exists, create it if not
+if not os.path.exists(db_file):
+    conn, cursor = connect_database()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS products (
+                        ID INTEGER PRIMARY KEY,
+                        Name TEXT NOT NULL,
+                        Price REAL NOT NULL,
+                        Quantity INTEGER NOT NULL)''')
+    conn.commit()
+    conn.close()
+    print("Database created successfully at:", db_file)
+else:
+    print("Database already exists at:", db_file)
+
 class Gui(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -35,35 +62,34 @@ class Gui(tk.Tk):
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.tree.pack(expand=True, fill="both", padx=5, pady=5)
 
-        # Main functions
+        # Create the database and populate Treeview
+        self.create_database()
         self.Tree()
+
+        # Main functions
         self.Button()
         self.MenuBar()
 
+    # Function to create or connect to the database
+    def create_database(self):
+        self.conn, self.cursor = connect_database()
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS products (
+                        ID INTEGER PRIMARY KEY,
+                        Name TEXT NOT NULL,
+                        Price REAL NOT NULL,
+                        Quantity INTEGER NOT NULL)''')
+        self.conn.commit()
+
+    # Treeview function
     def Tree(self):
         # Clear existing data
         self.tree.delete(*self.tree.get_children())
 
-        # Check if the database file exists
-        if os.path.isfile('inventory.db'):
-            # Retrieve data from the SQLite database and insert it into the Treeview
-            conn = sqlite3.connect('inventory.db')
-            cursor = conn.cursor()
-            cursor.execute('''CREATE TABLE IF NOT EXISTS products (
-                                ID INTEGER PRIMARY KEY,
-                                Name TEXT NOT NULL,
-                                Price REAL NOT NULL,
-                                QUANTITY INTEGER NOT NULL)''')
-            
-            rows = cursor.execute("SELECT * FROM products").fetchall()
-            for row in rows:
-                self.tree.insert("", "end", values=row)
-            
-            # Close the connection
-            conn.close()
-        else:
-            messagebox.showwarning("Database Not Found", "No database file found. Proceeding without database functionality.")
-    
+        # Retrieve data from the SQLite database and insert it into the Treeview
+        self.cursor.execute("SELECT * FROM products")
+        rows = self.cursor.fetchall()
+        for row in rows:
+            self.tree.insert("", "end", values=row)
     
     #Button widgets below treeview    
     def Button(self):           
@@ -233,7 +259,7 @@ class Gui(tk.Tk):
     def update(self):
         # Open a new window for updating products
         update_window = tk.Toplevel(self)
-        update_window.geometry("840x405")
+        update_window.geometry("250x250")
         update_window.title("Update Product")
         update_window.resizable(False, False)
         update_window.configure(bd=20, relief=tk.RIDGE)
